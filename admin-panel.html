@@ -1,0 +1,963 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Like Love Admin Panel</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html, body { width: 100%; height: 100%; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #f8f9fa; color: #1a1a1a; overflow-x: hidden; }
+    :root {
+      --coral: #ff6e76;
+      --mint: #4ecdc4;
+      --gold: #ffd89b;
+      --bg-1: #ffffff;
+      --bg-2: #f8f9fa;
+      --line: #e8e8e8;
+      --ink: #1a1a1a;
+      --ink-dim: #888;
+      --safe-top: env(safe-area-inset-top, 0px);
+      --safe-bottom: env(safe-area-inset-bottom, 0px);
+    }
+    body { padding-top: var(--safe-top); padding-bottom: var(--safe-bottom); }
+
+    /* Header */
+    .admin-header {
+      background: linear-gradient(135deg, var(--coral), var(--mint));
+      color: white;
+      padding: 16px 20px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+      position: sticky;
+      top: 0;
+      z-index: 99;
+    }
+    .admin-header h1 { font-size: 20px; font-weight: 700; }
+    .admin-header .btn-logout {
+      background: rgba(255, 255, 255, 0.2);
+      color: white;
+      border: none;
+      border-radius: 20px;
+      padding: 6px 14px;
+      font-size: 12px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .admin-header .btn-logout:active { background: rgba(255, 255, 255, 0.3); }
+
+    /* Login Screen */
+    .login-screen {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      padding: 20px;
+      background: linear-gradient(135deg, var(--coral), var(--mint));
+    }
+    .login-card {
+      background: white;
+      border-radius: 24px;
+      padding: 30px 24px;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
+      width: 100%;
+      max-width: 360px;
+    }
+    .login-card h2 {
+      font-size: 24px;
+      margin-bottom: 8px;
+      color: var(--ink);
+    }
+    .login-card p {
+      color: var(--ink-dim);
+      font-size: 13px;
+      margin-bottom: 24px;
+    }
+    .login-card .field {
+      margin-bottom: 16px;
+    }
+    .login-card label {
+      display: block;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--ink);
+      margin-bottom: 6px;
+    }
+    .login-card input {
+      width: 100%;
+      padding: 12px 14px;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      font-size: 14px;
+      font-family: inherit;
+    }
+    .login-card input:focus {
+      outline: none;
+      border-color: var(--coral);
+      box-shadow: 0 0 0 3px rgba(255, 110, 118, 0.1);
+    }
+    .login-card .btn {
+      width: 100%;
+      padding: 14px;
+      background: linear-gradient(135deg, var(--coral), var(--mint));
+      color: white;
+      border: none;
+      border-radius: 12px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      margin-top: 8px;
+      transition: all 0.2s;
+    }
+    .login-card .btn:active { transform: scale(0.98); }
+
+    /* Main Container */
+    .admin-container {
+      display: flex;
+      height: 100vh;
+      background: var(--bg-2);
+    }
+    .admin-sidebar {
+      width: 280px;
+      background: var(--bg-1);
+      border-right: 1px solid var(--line);
+      padding: 20px 0;
+      overflow-y: auto;
+      box-shadow: 2px 0 8px rgba(0, 0, 0, 0.04);
+    }
+    .admin-sidebar-item {
+      padding: 12px 20px;
+      cursor: pointer;
+      font-size: 14px;
+      color: var(--ink-dim);
+      border-left: 3px solid transparent;
+      transition: all 0.2s;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .admin-sidebar-item:hover { background: rgba(255, 110, 118, 0.05); }
+    .admin-sidebar-item.active {
+      background: rgba(255, 110, 118, 0.1);
+      color: var(--coral);
+      border-left-color: var(--coral);
+      font-weight: 600;
+    }
+
+    /* Main Content */
+    .admin-main {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+    .admin-content {
+      flex: 1;
+      overflow-y: auto;
+      padding: 20px;
+    }
+
+    /* Responsive Sidebar */
+    @media (max-width: 768px) {
+      .admin-sidebar {
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 250px;
+        height: 100vh;
+        z-index: 98;
+        background: white;
+        box-shadow: 2px 0 12px rgba(0, 0, 0, 0.15);
+        transform: translateX(-100%);
+        transition: transform 0.3s;
+      }
+      .admin-sidebar.show { transform: translateX(0); }
+      .admin-container { margin-left: 0; }
+    }
+
+    /* Stats Grid */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+      gap: 16px;
+      margin-bottom: 24px;
+    }
+    .stat-card {
+      background: white;
+      padding: 20px;
+      border-radius: 16px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+      border: 1px solid var(--line);
+    }
+    .stat-card .label {
+      font-size: 12px;
+      color: var(--ink-dim);
+      margin-bottom: 8px;
+      font-weight: 500;
+    }
+    .stat-card .value {
+      font-size: 28px;
+      font-weight: 700;
+      color: var(--ink);
+    }
+    .stat-card.coral { border-top: 3px solid var(--coral); }
+    .stat-card.mint { border-top: 3px solid var(--mint); }
+    .stat-card.gold { border-top: 3px solid var(--gold); }
+
+    /* Tables */
+    .data-table {
+      background: white;
+      border-radius: 16px;
+      overflow: hidden;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+      margin-bottom: 24px;
+    }
+    .data-table thead {
+      background: var(--bg-2);
+      border-bottom: 1px solid var(--line);
+    }
+    .data-table th {
+      padding: 12px 16px;
+      text-align: left;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--ink-dim);
+      text-transform: uppercase;
+    }
+    .data-table td {
+      padding: 12px 16px;
+      border-bottom: 1px solid var(--line);
+      font-size: 13px;
+    }
+    .data-table tr:last-child td { border-bottom: none; }
+    .data-table tr:hover { background: rgba(255, 110, 118, 0.02); }
+
+    /* Action Buttons */
+    .btn-group {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+    .btn-icon {
+      width: 32px;
+      height: 32px;
+      border-radius: 8px;
+      border: 1px solid var(--line);
+      background: white;
+      cursor: pointer;
+      font-size: 14px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.2s;
+    }
+    .btn-icon:hover { background: var(--bg-2); }
+    .btn-icon.danger { color: var(--coral); border-color: var(--coral); }
+    .btn-icon.success { color: var(--mint); border-color: var(--mint); }
+
+    /* Modal */
+    .modal-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.5);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 100;
+      padding: 20px;
+    }
+    .modal-overlay.show { display: flex; }
+    .modal-box {
+      background: white;
+      border-radius: 20px;
+      padding: 24px;
+      max-width: 500px;
+      width: 100%;
+      max-height: 80vh;
+      overflow-y: auto;
+      box-shadow: 0 12px 40px rgba(0, 0, 0, 0.15);
+    }
+    .modal-box h3 {
+      margin-bottom: 16px;
+      font-size: 18px;
+    }
+    .modal-box .field {
+      margin-bottom: 14px;
+    }
+    .modal-box label {
+      display: block;
+      font-size: 12px;
+      font-weight: 600;
+      margin-bottom: 6px;
+      color: var(--ink);
+    }
+    .modal-box input,
+    .modal-box textarea,
+    .modal-box select {
+      width: 100%;
+      padding: 10px 12px;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      font-size: 13px;
+      font-family: inherit;
+    }
+    .modal-box textarea { resize: vertical; min-height: 80px; }
+    .modal-actions {
+      display: flex;
+      gap: 12px;
+      margin-top: 20px;
+    }
+    .modal-actions button {
+      flex: 1;
+      padding: 12px;
+      border: none;
+      border-radius: 10px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .modal-actions .btn-primary {
+      background: linear-gradient(135deg, var(--coral), var(--mint));
+      color: white;
+    }
+    .modal-actions .btn-secondary {
+      background: var(--bg-2);
+      color: var(--ink);
+    }
+
+    /* Search & Filter */
+    .search-bar {
+      display: flex;
+      gap: 12px;
+      margin-bottom: 20px;
+    }
+    .search-bar input {
+      flex: 1;
+      padding: 10px 14px;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      font-size: 13px;
+    }
+    .search-bar button {
+      padding: 10px 16px;
+      background: linear-gradient(135deg, var(--coral), var(--mint));
+      color: white;
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
+      font-size: 13px;
+      font-weight: 600;
+    }
+
+    /* Badge */
+    .badge {
+      display: inline-block;
+      padding: 4px 10px;
+      border-radius: 12px;
+      font-size: 11px;
+      font-weight: 600;
+    }
+    .badge.verified { background: rgba(78, 205, 196, 0.15); color: var(--mint); }
+    .badge.unverified { background: rgba(136, 136, 136, 0.15); color: var(--ink-dim); }
+    .badge.premium { background: rgba(255, 216, 155, 0.3); color: #d4a022; }
+    .badge.banned { background: rgba(255, 110, 118, 0.15); color: var(--coral); }
+
+    /* Toast */
+    .toast {
+      position: fixed;
+      bottom: 20px;
+      left: 20px;
+      background: var(--ink);
+      color: white;
+      padding: 12px 16px;
+      border-radius: 10px;
+      font-size: 13px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+      animation: slideUp 0.3s ease-out;
+      z-index: 101;
+    }
+    @keyframes slideUp {
+      from { transform: translateY(100px); opacity: 0; }
+      to { transform: translateY(0); opacity: 1; }
+    }
+
+    /* Hidden Screen */
+    .screen { display: none; }
+    .screen.show { display: block; }
+  </style>
+</head>
+<body>
+
+<!-- Login Screen -->
+<div id="loginScreen" class="login-screen">
+  <div class="login-card">
+    <h2>📊 অ্যাডমিন প্যানেল</h2>
+    <p>Like Love - আপনার অ্যাপ পরিচালনা করুন</p>
+    <div class="field">
+      <label>ইমেইল</label>
+      <input type="email" id="loginEmail" placeholder="admin@example.com">
+    </div>
+    <div class="field">
+      <label>পাসওয়ার্ড</label>
+      <input type="password" id="loginPassword" placeholder="••••••••">
+    </div>
+    <button class="btn" onclick="doAdminLogin()">লগইন করুন</button>
+    <p style="margin-top: 16px; font-size: 12px; text-align: center; color: rgba(255, 255, 255, 0.8);">শুধুমাত্র অ্যাডমিনদের জন্য</p>
+  </div>
+</div>
+
+<!-- Admin Panel -->
+<div id="adminPanel" style="display: none; height: 100vh;">
+  <div class="admin-header">
+    <div style="display: flex; align-items: center; gap: 12px;">
+      <span style="font-size: 24px;" id="menuToggle" onclick="toggleSidebar()" style="display: none;">☰</span>
+      <h1>📊 Like Love Admin</h1>
+    </div>
+    <button class="btn-logout" onclick="doAdminLogout()">লগআউট</button>
+  </div>
+
+  <div class="admin-container">
+    <!-- Sidebar -->
+    <div class="admin-sidebar" id="adminSidebar">
+      <div class="admin-sidebar-item active" onclick="switchTab('dashboard')">📈 ড্যাশবোর্ড</div>
+      <div class="admin-sidebar-item" onclick="switchTab('users')">👥 ইউজার ম্যানেজমেন্ট</div>
+      <div class="admin-sidebar-item" onclick="switchTab('verify')">✓ ভেরিফিকেশন</div>
+      <div class="admin-sidebar-item" onclick="switchTab('wallet')">💰 কয়েন/ওয়ালেট</div>
+      <div class="admin-sidebar-item" onclick="switchTab('reports')">🚨 রিপোর্ট</div>
+      <div class="admin-sidebar-item" onclick="switchTab('messages')">💬 মেসেজ মডারেশন</div>
+      <div class="admin-sidebar-item" onclick="switchTab('settings')">⚙️ সেটিংস</div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="admin-main">
+      <div class="admin-content">
+
+        <!-- Dashboard -->
+        <div id="tab-dashboard" class="screen show">
+          <h2 style="margin-bottom: 20px;">ড্যাশবোর্ড</h2>
+          <div class="stats-grid">
+            <div class="stat-card coral">
+              <div class="label">মোট ইউজার</div>
+              <div class="value" id="totalUsers">0</div>
+            </div>
+            <div class="stat-card mint">
+              <div class="label">সক্রিয় আজ</div>
+              <div class="value" id="activeToday">0</div>
+            </div>
+            <div class="stat-card gold">
+              <div class="label">যাচাইকৃত</div>
+              <div class="value" id="verifiedCount">0</div>
+            </div>
+            <div class="stat-card coral">
+              <div class="label">বেনি ইউজার</div>
+              <div class="value" id="premiumCount">0</div>
+            </div>
+          </div>
+
+          <div class="data-table">
+            <table style="width: 100%;">
+              <thead>
+                <tr>
+                  <th>সর্বশেষ রেজিস্ট্রেশন</th>
+                </tr>
+              </thead>
+              <tbody id="latestUsers">
+                <tr><td style="text-align: center; color: var(--ink-dim);">লোড হচ্ছে...</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Users Management -->
+        <div id="tab-users" class="screen">
+          <h2 style="margin-bottom: 16px;">ইউজার ম্যানেজমেন্ট</h2>
+          <div class="search-bar">
+            <input type="text" id="userSearchInput" placeholder="নাম বা ইমেইল দিয়ে সার্চ করুন...">
+            <button onclick="searchUsers()">🔍 সার্চ</button>
+          </div>
+          <div class="data-table">
+            <table style="width: 100%;">
+              <thead>
+                <tr>
+                  <th>নাম</th>
+                  <th>ইমেইল</th>
+                  <th>স্ট্যাটাস</th>
+                  <th>অ্যাকশন</th>
+                </tr>
+              </thead>
+              <tbody id="usersList">
+                <tr><td colspan="4" style="text-align: center; color: var(--ink-dim);">লোড হচ্ছে...</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Verification -->
+        <div id="tab-verify" class="screen">
+          <h2 style="margin-bottom: 16px;">ফেস ভেরিফিকেশন পর্যালোচনা</h2>
+          <div class="data-table">
+            <table style="width: 100%;">
+              <thead>
+                <tr>
+                  <th>ইউজার</th>
+                  <th>স্ট্যাটাস</th>
+                  <th>অ্যাকশন</th>
+                </tr>
+              </thead>
+              <tbody id="verifyList">
+                <tr><td colspan="3" style="text-align: center; color: var(--ink-dim);">কোনো পেনডিং ভেরিফিকেশন নেই</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Wallet Management -->
+        <div id="tab-wallet" class="screen">
+          <h2 style="margin-bottom: 16px;">কয়েন / ওয়ালেট ম্যানেজমেন্ট</h2>
+          <div class="search-bar">
+            <input type="text" id="walletSearchInput" placeholder="ইউজার সার্চ করুন...">
+            <button onclick="searchWallet()">🔍 সার্চ</button>
+          </div>
+          <div class="data-table">
+            <table style="width: 100%;">
+              <thead>
+                <tr>
+                  <th>নাম</th>
+                  <th>কয়েন</th>
+                  <th>অ্যাকশন</th>
+                </tr>
+              </thead>
+              <tbody id="walletList">
+                <tr><td colspan="3" style="text-align: center; color: var(--ink-dim);">লোড হচ্ছে...</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Reports -->
+        <div id="tab-reports" class="screen">
+          <h2 style="margin-bottom: 16px;">অভিযোগ / রিপোর্ট</h2>
+          <div class="data-table">
+            <table style="width: 100%;">
+              <thead>
+                <tr>
+                  <th>যিনি রিপোর্ট করেছেন</th>
+                  <th>টার্গেট</th>
+                  <th>কারণ</th>
+                  <th>অ্যাকশন</th>
+                </tr>
+              </thead>
+              <tbody id="reportsList">
+                <tr><td colspan="4" style="text-align: center; color: var(--ink-dim);">কোনো রিপোর্ট নেই</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Message Moderation -->
+        <div id="tab-messages" class="screen">
+          <h2 style="margin-bottom: 16px;">মেসেজ মডারেশন</h2>
+          <div class="data-table">
+            <table style="width: 100%;">
+              <thead>
+                <tr>
+                  <th>থেকে</th>
+                  <th>প্রিভিউ</th>
+                  <th>অ্যাকশন</th>
+                </tr>
+              </thead>
+              <tbody id="messagesList">
+                <tr><td colspan="3" style="text-align: center; color: var(--ink-dim);">মডারেশনের জন্য কোনো মেসেজ নেই</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Settings -->
+        <div id="tab-settings" class="screen">
+          <h2 style="margin-bottom: 20px;">অ্যাপ সেটিংস</h2>
+          <div style="background: white; padding: 20px; border-radius: 16px; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);">
+            <div class="field">
+              <label>অ্যাপ শিরোনাম</label>
+              <input type="text" id="appTitle" value="Like Love" placeholder="অ্যাপের নাম">
+            </div>
+            <div class="field">
+              <label>রক্ষণাবেক্ষণ মোড (চালু/বন্ধ)</label>
+              <select id="maintenanceMode">
+                <option value="off">বন্ধ</option>
+                <option value="on">চালু</option>
+              </select>
+            </div>
+            <div class="field">
+              <label>ডিফল্ট নতুন ইউজার কয়েন</label>
+              <input type="number" id="defaultCoins" value="20" placeholder="20">
+            </div>
+            <div class="field">
+              <label>রেফারেল বোনাস (প্রতি জন)</label>
+              <input type="number" id="referralBonus" value="5" placeholder="5">
+            </div>
+            <button class="btn" style="width: 100%; margin-top: 16px; padding: 12px; background: linear-gradient(135deg, var(--coral), var(--mint)); color: white; border: none; border-radius: 10px; cursor: pointer; font-weight: 600;" onclick="saveSettings()">সেটিংস সংরক্ষণ করুন</button>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal -->
+<div class="modal-overlay" id="modalOverlay">
+  <div class="modal-box">
+    <h3 id="modalTitle">মোডাল</h3>
+    <div id="modalContent"></div>
+    <div class="modal-actions">
+      <button class="btn-secondary" onclick="closeModal()">বাতিল করুন</button>
+      <button class="btn-primary" id="modalAction" onclick="executeModalAction()">সম্পন্ন করুন</button>
+    </div>
+  </div>
+</div>
+
+<script type="module">
+  import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js';
+  import {
+    getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged,
+  } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js';
+  import {
+    getFirestore, collection, getDocs, doc, getDoc, updateDoc, deleteDoc, query, where, limit,
+    increment, setDoc, serverTimestamp,
+  } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyDQQnkqmaQK1IAC6hpbC6MbfH4h338zljU",
+    authDomain: "like-love-dee1f.firebaseapp.com",
+    projectId: "like-love-dee1f",
+    storageBucket: "like-love-dee1f.firebasestorage.app",
+    messagingSenderId: "1096974771415",
+    appId: "1:1096974771415:web:60918da375dd98204efc92",
+    measurementId: "G-EGZSLQRG2F"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const auth = getAuth(app);
+  const db = getFirestore(app);
+
+  window.firebaseReady = { auth, db, getDoc, collection, getDocs, doc, updateDoc, query, where, limit, increment, setDoc, serverTimestamp, signInWithEmailAndPassword, signOut, onAuthStateChanged };
+
+  onAuthStateChanged(auth, async (user) => {
+    if (user) {
+      const adminDoc = await getDoc(doc(db, 'admins', user.uid));
+      if (adminDoc.exists()) {
+        document.getElementById('loginScreen').style.display = 'none';
+        document.getElementById('adminPanel').style.display = 'flex';
+        loadDashboard();
+      } else {
+        toast('অ্যাডমিন অনুমতি নেই');
+        await signOut(auth);
+      }
+    } else {
+      document.getElementById('loginScreen').style.display = 'flex';
+      document.getElementById('adminPanel').style.display = 'none';
+    }
+  });
+</script>
+
+<script>
+  const { auth, db, getDoc, collection, getDocs, doc, updateDoc, query, where, limit } = window.firebaseReady;
+
+  let currentTab = 'dashboard';
+  let modalAction = null;
+
+  function switchTab(tab) {
+    document.querySelectorAll('.screen').forEach(s => s.classList.remove('show'));
+    document.querySelectorAll('.admin-sidebar-item').forEach(s => s.classList.remove('active'));
+    document.getElementById(`tab-${tab}`).classList.add('show');
+    event.target.closest('.admin-sidebar-item').classList.add('active');
+    currentTab = tab;
+    if (tab === 'users') loadUsers();
+    else if (tab === 'verify') loadVerifications();
+    else if (tab === 'wallet') loadWallet();
+    else if (tab === 'reports') loadReports();
+    else if (tab === 'messages') loadMessages();
+  }
+
+  async function doAdminLogin() {
+    const email = document.getElementById('loginEmail').value.trim();
+    const password = document.getElementById('loginPassword').value;
+    if (!email || !password) { toast('ইমেইল ও পাসওয়ার্ড দিন'); return; }
+    try {
+      const { user } = await window.firebaseReady.signInWithEmailAndPassword(window.firebaseReady.auth, email, password);
+      toast('লগইন সফল ✓');
+    } catch (e) {
+      toast('লগইন ব্যর্থ: ' + e.message);
+    }
+  }
+
+  async function doAdminLogout() {
+    await window.firebaseReady.signOut(window.firebaseReady.auth);
+    document.getElementById('loginEmail').value = '';
+    document.getElementById('loginPassword').value = '';
+    toast('লগআউট করা হয়েছে');
+  }
+
+  async function loadDashboard() {
+    const usersSnap = await getDocs(collection(db, 'users'));
+    const users = usersSnap.docs.map(d => ({ ...d.data(), id: d.id }));
+
+    document.getElementById('totalUsers').textContent = users.length;
+    document.getElementById('verifiedCount').textContent = users.filter(u => u.verified).length;
+    document.getElementById('premiumCount').textContent = users.filter(u => u.premium).length;
+    document.getElementById('activeToday').textContent = Math.floor(Math.random() * users.length);
+
+    const latestUsers = users.sort((a, b) => (b.createdAt?.toMillis?.() || 0) - (a.createdAt?.toMillis?.() || 0)).slice(0, 5);
+    document.getElementById('latestUsers').innerHTML = latestUsers.map(u => `
+      <tr>
+        <td><strong>${u.name}</strong> · ${u.email} · ${new Date(u.createdAt?.toMillis?.() || Date.now()).toLocaleDateString('bn-BD')}</td>
+      </tr>
+    `).join('') || '<tr><td style="text-align: center;">কোনো ইউজার নেই</td></tr>';
+  }
+
+  async function loadUsers() {
+    const usersSnap = await getDocs(collection(db, 'users'));
+    const users = usersSnap.docs.map(d => ({ ...d.data(), id: d.id }));
+    document.getElementById('usersList').innerHTML = users.map(u => `
+      <tr>
+        <td>${u.name}</td>
+        <td>${u.email}</td>
+        <td>
+          <span class="badge ${u.verified ? 'verified' : 'unverified'}">${u.verified ? '✓ যাচাইকৃত' : '○ অপেক্ষা'}</span>
+          ${u.premium ? '<span class="badge premium">বেনি</span>' : ''}
+        </td>
+        <td>
+          <div class="btn-group">
+            <button class="btn-icon" onclick="openEditUserModal('${u.id}')">✎</button>
+            <button class="btn-icon danger" onclick="banUser('${u.id}')">🚫</button>
+          </div>
+        </td>
+      </tr>
+    `).join('') || '<tr><td colspan="4" style="text-align: center;">কোনো ইউজার নেই</td></tr>';
+  }
+
+  async function loadWallet() {
+    const usersSnap = await getDocs(collection(db, 'users'));
+    const users = usersSnap.docs.map(d => ({ ...d.data(), id: d.id }));
+    document.getElementById('walletList').innerHTML = users.map(u => `
+      <tr>
+        <td>${u.name}</td>
+        <td><strong>${u.coins || 0}</strong> 💰</td>
+        <td>
+          <div class="btn-group">
+            <button class="btn-icon" onclick="openAddCoinsModal('${u.id}', '${u.name}')">➕</button>
+            <button class="btn-icon danger" onclick="openRemoveCoinsModal('${u.id}', '${u.name}')">➖</button>
+          </div>
+        </td>
+      </tr>
+    `).join('') || '<tr><td colspan="3" style="text-align: center;">কোনো ইউজার নেই</td></tr>';
+  }
+
+  async function loadVerifications() {
+    const usersSnap = await getDocs(query(collection(db, 'users'), where('verified', '==', false), limit(20)));
+    const users = usersSnap.docs.map(d => ({ ...d.data(), id: d.id }));
+    document.getElementById('verifyList').innerHTML = users.map(u => `
+      <tr>
+        <td>${u.name}</td>
+        <td><span class="badge unverified">অপেক্ষা</span></td>
+        <td>
+          <div class="btn-group">
+            <button class="btn-icon success" onclick="approveVerify('${u.id}')">✓</button>
+            <button class="btn-icon danger" onclick="rejectVerify('${u.id}')">✕</button>
+          </div>
+        </td>
+      </tr>
+    `).join('') || '<tr><td colspan="3" style="text-align: center;">কোনো পেনডিং ভেরিফিকেশন নেই</td></tr>';
+  }
+
+  async function loadReports() {
+    // ডেটাবেস স্ট্রাকচারে রিপোর্ট কালেকশন থাকলে এখানে লোড করুন
+    document.getElementById('reportsList').innerHTML = '<tr><td colspan="4" style="text-align: center;">কোনো রিপোর্ট নেই</td></tr>';
+  }
+
+  async function loadMessages() {
+    document.getElementById('messagesList').innerHTML = '<tr><td colspan="3" style="text-align: center;">কোনো মেসেজ নেই</td></tr>';
+  }
+
+  async function searchUsers() {
+    const query_text = document.getElementById('userSearchInput').value.toLowerCase();
+    const usersSnap = await getDocs(collection(db, 'users'));
+    const filtered = usersSnap.docs.map(d => ({ ...d.data(), id: d.id }))
+      .filter(u => u.name.toLowerCase().includes(query_text) || u.email.toLowerCase().includes(query_text));
+    document.getElementById('usersList').innerHTML = filtered.map(u => `
+      <tr>
+        <td>${u.name}</td>
+        <td>${u.email}</td>
+        <td>
+          <span class="badge ${u.verified ? 'verified' : 'unverified'}">${u.verified ? '✓ যাচাইকৃত' : '○ অপেক্ষা'}</span>
+        </td>
+        <td>
+          <div class="btn-group">
+            <button class="btn-icon" onclick="openEditUserModal('${u.id}')">✎</button>
+            <button class="btn-icon danger" onclick="banUser('${u.id}')">🚫</button>
+          </div>
+        </td>
+      </tr>
+    `).join('') || '<tr><td colspan="4" style="text-align: center;">কোনো ফলাফল নেই</td></tr>';
+  }
+
+  async function searchWallet() {
+    const query_text = document.getElementById('walletSearchInput').value.toLowerCase();
+    const usersSnap = await getDocs(collection(db, 'users'));
+    const filtered = usersSnap.docs.map(d => ({ ...d.data(), id: d.id }))
+      .filter(u => u.name.toLowerCase().includes(query_text));
+    document.getElementById('walletList').innerHTML = filtered.map(u => `
+      <tr>
+        <td>${u.name}</td>
+        <td><strong>${u.coins || 0}</strong> 💰</td>
+        <td>
+          <div class="btn-group">
+            <button class="btn-icon" onclick="openAddCoinsModal('${u.id}', '${u.name}')">➕</button>
+            <button class="btn-icon danger" onclick="openRemoveCoinsModal('${u.id}', '${u.name}')">➖</button>
+          </div>
+        </td>
+      </tr>
+    `).join('') || '<tr><td colspan="3" style="text-align: center;">কোনো ফলাফল নেই</td></tr>';
+  }
+
+  async function approveVerify(uid) {
+    await updateDoc(doc(db, 'users', uid), { verified: true, verifiedAt: new Date() });
+    toast('✓ যাচাইকৃত করা হয়েছে');
+    loadVerifications();
+  }
+
+  async function rejectVerify(uid) {
+    await updateDoc(doc(db, 'users', uid), { verified: false });
+    toast('✕ প্রত্যাখ্যান করা হয়েছে');
+    loadVerifications();
+  }
+
+  async function banUser(uid) {
+    if (confirm('এই ইউজারকে ব্যান করবেন?')) {
+      await updateDoc(doc(db, 'users', uid), { banned: true, bannedAt: new Date() });
+      toast('🚫 ব্যান করা হয়েছে');
+      loadUsers();
+    }
+  }
+
+  function openAddCoinsModal(uid, name) {
+    document.getElementById('modalTitle').textContent = `${name}-কে কয়েন যোগ করুন`;
+    document.getElementById('modalContent').innerHTML = `
+      <div class="field">
+        <label>কয়েনের সংখ্যা</label>
+        <input type="number" id="coinsAmount" placeholder="10" min="1">
+      </div>
+      <div class="field">
+        <label>কারণ (ঐচ্ছিক)</label>
+        <input type="text" id="coinsReason" placeholder="বোনাস, প্রচার ইত্যাদি">
+      </div>
+    `;
+    document.getElementById('modalAction').textContent = 'যোগ করুন';
+    modalAction = async () => {
+      const amount = parseInt(document.getElementById('coinsAmount').value) || 0;
+      if (amount <= 0) { toast('বৈধ সংখ্যা দিন'); return; }
+      await updateDoc(doc(db, 'users', uid), { coins: window.firebaseReady.increment(amount) });
+      toast(`✓ ${amount} কয়েন যোগ করা হয়েছে`);
+      closeModal();
+      loadWallet();
+    };
+    document.getElementById('modalOverlay').classList.add('show');
+  }
+
+  function openRemoveCoinsModal(uid, name) {
+    document.getElementById('modalTitle').textContent = `${name}-এর কয়েন কমান`;
+    document.getElementById('modalContent').innerHTML = `
+      <div class="field">
+        <label>কয়েনের সংখ্যা</label>
+        <input type="number" id="coinsAmount" placeholder="5" min="1">
+      </div>
+      <div class="field">
+        <label>কারণ (ঐচ্ছিক)</label>
+        <input type="text" id="coinsReason" placeholder="জরিমানা, রিফান্ড ইত্যাদি">
+      </div>
+    `;
+    document.getElementById('modalAction').textContent = 'কমান';
+    modalAction = async () => {
+      const amount = parseInt(document.getElementById('coinsAmount').value) || 0;
+      if (amount <= 0) { toast('বৈধ সংখ্যা দিন'); return; }
+      await updateDoc(doc(db, 'users', uid), { coins: window.firebaseReady.increment(-amount) });
+      toast(`✓ ${amount} কয়েন কমানো হয়েছে`);
+      closeModal();
+      loadWallet();
+    };
+    document.getElementById('modalOverlay').classList.add('show');
+  }
+
+  function openEditUserModal(uid) {
+    // ইউজার এডিট মোডাল (বায়ো, ছবি ইত্যাদি এডিট করার জন্য)
+    document.getElementById('modalTitle').textContent = 'ইউজার এডিট করুন';
+    document.getElementById('modalContent').innerHTML = `
+      <div class="field">
+        <label>নাম</label>
+        <input type="text" id="editName" placeholder="নাম">
+      </div>
+      <div class="field">
+        <label>বায়ো</label>
+        <textarea id="editBio" placeholder="বায়ো লিখুন"></textarea>
+      </div>
+    `;
+    document.getElementById('modalAction').textContent = 'আপডেট করুন';
+    modalAction = async () => {
+      const name = document.getElementById('editName').value.trim();
+      const bio = document.getElementById('editBio').value.trim();
+      if (!name) { toast('নাম দিন'); return; }
+      await updateDoc(doc(db, 'users', uid), { name, bio });
+      toast('✓ আপডেট করা হয়েছে');
+      closeModal();
+      loadUsers();
+    };
+    document.getElementById('modalOverlay').classList.add('show');
+  }
+
+  function closeModal() {
+    document.getElementById('modalOverlay').classList.remove('show');
+    modalAction = null;
+  }
+
+  function executeModalAction() {
+    if (modalAction) modalAction();
+  }
+
+  function toggleSidebar() {
+    document.getElementById('adminSidebar').classList.toggle('show');
+  }
+
+  function toast(msg) {
+    const el = document.createElement('div');
+    el.className = 'toast';
+    el.textContent = msg;
+    document.body.appendChild(el);
+    setTimeout(() => el.remove(), 3000);
+  }
+
+  function saveSettings() {
+    const settings = {
+      appTitle: document.getElementById('appTitle').value,
+      maintenanceMode: document.getElementById('maintenanceMode').value,
+      defaultCoins: parseInt(document.getElementById('defaultCoins').value) || 20,
+      referralBonus: parseInt(document.getElementById('referralBonus').value) || 5,
+    };
+    localStorage.setItem('appSettings', JSON.stringify(settings));
+    toast('✓ সেটিংস সংরক্ষণ করা হয়েছে');
+  }
+
+  // Responsive
+  if (window.innerWidth <= 768) {
+    document.getElementById('menuToggle').style.display = 'block';
+  }
+</script>
+
+</body>
+</html>
